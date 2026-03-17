@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teardown Bridge</title>
+  <style>
+    body { font-family: "Segoe UI", "PingFang SC", sans-serif; margin: 0; background: #0f172a; color: #e5eefc; }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 24px; }
+    .card { background: #162032; border: 1px solid #28344f; border-radius: 16px; padding: 18px; margin-bottom: 16px; }
+    h1 { margin: 0 0 10px; font-size: 26px; }
+    .muted { color: #9fb0d0; }
+    .grid { display: grid; grid-template-columns: 120px 1fr; gap: 10px 12px; align-items: center; }
+    input { width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid #3b4a6a; background: #0f172a; color: #fff; }
+    button { border: 0; background: #4f8cff; color: #fff; padding: 10px 14px; border-radius: 10px; cursor: pointer; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; background: #1f2b42; margin: 4px 6px 0 0; }
+    .ok { color: #30d158; } .warn { color: #ffd60a; } .off { color: #ff453a; }
+    a { color: #8bb5ff; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Teardown Bridge</h1>
+      <div class="muted">房主昵称自动读取。你只需要填房间名称 / 玩法说明。</div>
+    </div>
+
+    <div class="card">
+      <div class="grid">
+        <div>房间名称</div>
+        <input id="roomLabel" placeholder="比如：生存联机 / PVP测试 / 塔科夫mod局" />
+        <div>云端上报</div>
+        <input id="cloudEndpoint" placeholder="http://your-cloud-center:18080/report" />
+        <div>本机ID</div>
+        <input id="clientId" readonly />
+      </div>
+      <div class="row" style="margin-top:14px;">
+        <button onclick="saveConfig()">保存配置</button>
+        <button onclick="openCloud()">打开云端网页</button>
+        <button onclick="refreshStatus()">刷新状态</button>
+      </div>
+      <div id="saveMsg" class="muted" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0;">当前状态</h3>
+      <div id="status" class="muted">加载中...</div>
+    </div>
+  </div>
+
+  <script>
+    function esc(s) { return String(s ?? '').replace(/[&<>\"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
+    async function loadConfig() {
+      const res = await fetch('/ui/config?_=' + Date.now());
+      const data = await res.json();
+      document.getElementById('roomLabel').value = data.roomLabel || '';
+      document.getElementById('cloudEndpoint').value = data.cloudEndpoint || '';
+      document.getElementById('clientId').value = data.clientId || '';
+    }
+    async function saveConfig() {
+      const payload = {
+        roomLabel: document.getElementById('roomLabel').value,
+        cloudEndpoint: document.getElementById('cloudEndpoint').value,
+        clientId: document.getElementById('clientId').value,
+      };
+      const res = await fetch('/ui/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      document.getElementById('saveMsg').textContent = data.ok ? '已保存，重启 bridge 后生效' : ('保存失败：' + (data.detail || 'unknown'));
+      if (data.config) document.getElementById('clientId').value = data.config.clientId || '';
+    }
+    async function refreshStatus() {
+      const res = await fetch('/bridge/status?_=' + Date.now());
+      const s = await res.json();
+      const statusText = s.online ? '<span class="ok">在线</span>' : (s.stale ? '<span class="warn">卡住</span>' : '<span class="off">离线</span>');
+      document.getElementById('status').innerHTML = `
+        房主：${esc(s.hostName || '-')}<br>
+        房间：${esc(s.roomLabel || '-')}<br>
+        人数：${s.playerCount || 0}/${s.maxPlayers || 0}<br>
+        状态：${statusText}<br>
+        uptime：${s.uptimeSeconds || 0}<br>
+        lastUpdate：${s.lastUpdate || 0}<br>
+        玩家：<div>${(s.players || []).map(p => `<span class="pill">${esc(p)}</span>`).join('') || '-'}</div>
+      `;
+    }
+    function openCloud() {
+      const url = document.getElementById('cloudEndpoint').value || 'http://your-cloud-center:18080/report';
+      const base = url.replace(/\/report\/?$/, '/');
+      window.open(base, '_blank');
+    }
+    loadConfig().then(refreshStatus);
+    setInterval(refreshStatus, 2000);
+  </script>
+</body>
+</html>

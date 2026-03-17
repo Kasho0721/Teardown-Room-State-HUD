@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teardown 房间状态</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070b14;
+      --bg-2: #0b1020;
+      --panel: rgba(20, 28, 45, .78);
+      --panel-2: rgba(16, 23, 38, .92);
+      --panel-soft: rgba(255,255,255,.04);
+      --text: #f5f7fb;
+      --muted: #98a6bd;
+      --muted-2: #7d8aa0;
+      --ok: #34c759;
+      --off: #ff453a;
+      --accent: #66a3ff;
+      --accent-2: #8e8dff;
+      --border: rgba(255,255,255,.08);
+      --shadow: 0 18px 48px rgba(0,0,0,.32);
+      --radius-xl: 30px;
+      --radius-lg: 24px;
+      --radius-md: 18px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      font-family: "SF Pro Display", "Segoe UI", "PingFang SC", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(102,163,255,.22), transparent 28%),
+        radial-gradient(circle at top right, rgba(142,141,255,.16), transparent 26%),
+        linear-gradient(180deg, var(--bg), var(--bg-2) 38%, #060911 100%);
+      min-height: 100vh;
+    }
+    .wrap {
+      width: min(1400px, calc(100vw - 40px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border-radius: 34px;
+      padding: 34px 34px 28px;
+      margin-bottom: 28px;
+      background:
+        linear-gradient(135deg, rgba(99,166,255,.24), rgba(142,141,255,.18) 45%, rgba(255,255,255,.05) 100%),
+        rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(24px);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -80px -120px auto;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,.15), transparent 64%);
+      pointer-events: none;
+    }
+    .topline {
+      color: rgba(255,255,255,.75);
+      font-size: 13px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: .95;
+      letter-spacing: -0.04em;
+      max-width: 700px;
+    }
+    .heroSub {
+      margin-top: 14px;
+      color: #d7e0ef;
+      font-size: 16px;
+      max-width: 720px;
+      line-height: 1.65;
+    }
+    .heroMeta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 22px;
+    }
+    .metaPill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      color: #f3f7ff;
+      border: 1px solid rgba(255,255,255,.08);
+      font-size: 14px;
+    }
+    .metaPill b { font-size: 15px; }
+    .section { margin-top: 34px; }
+    .sectionHead {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding: 0 4px;
+    }
+    .eyebrow {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .sectionTitle {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 38px);
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+    .sectionDesc {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .countBadge {
+      white-space: nowrap;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.05);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .rail {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(300px, 380px);
+      gap: 18px;
+      overflow-x: auto;
+      padding: 6px 4px 14px;
+      scroll-snap-type: x proximity;
+      scrollbar-width: thin;
+      scrollbar-color: #334155 transparent;
+    }
+    .rail::-webkit-scrollbar { height: 10px; }
+    .rail::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 999px;
+    }
+    .card {
+      position: relative;
+      min-height: 420px;
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      scroll-snap-align: start;
+      border: 1px solid rgba(255,255,255,.09);
+      box-shadow: var(--shadow);
+      background:
+        radial-gradient(circle at top right, rgba(102,163,255,.20), transparent 34%),
+        linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02)),
+        var(--panel-2);
+    }
+    .card.offlineCard {
+      min-height: 340px;
+      background:
+        radial-gradient(circle at top right, rgba(255,69,58,.10), transparent 35%),
+        linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)),
+        rgba(17, 22, 34, .96);
+      opacity: .92;
+    }
+    .cardInner {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+    }
+    .cardTop {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+    }
+    .miniLabel {
+      color: rgba(255,255,255,.62);
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .roomName {
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: .95;
+      letter-spacing: -0.05em;
+      font-weight: 800;
+      max-width: 240px;
+      word-break: break-word;
+    }
+    .statusBadge {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      backdrop-filter: blur(16px);
+    }
+    .statusBadge.online {
+      background: rgba(52,199,89,.16);
+      color: #74e696;
+      border: 1px solid rgba(52,199,89,.18);
+    }
+    .statusBadge.offline {
+      background: rgba(255,69,58,.12);
+      color: #ff8b84;
+      border: 1px solid rgba(255,69,58,.14);
+    }
+    .hostLine {
+      margin-top: 18px;
+      color: #dbe7fb;
+      font-size: 15px;
+    }
+    .codeBlock {
+      margin-top: 22px;
+      padding: 18px 18px 16px;
+      border-radius: 22px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .codeLabel {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .codeValue {
+      font-size: clamp(26px, 4vw, 40px);
+      line-height: 1;
+      letter-spacing: -0.05em;
+      font-weight: 800;
+      word-break: break-word;
+    }
+    .codeValue.empty { color: var(--muted-2); }
+    .quickStats {
+      margin-top: auto;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      padding-top: 22px;
+    }
+    .stat {
+      padding: 14px 15px;
+      border-radius: 20px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .statLabel {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .statValue {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+    }
+    .metaBlock {
+      margin-top: 18px;
+      display: grid;
+      gap: 10px;
+    }
+    .metaRow {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      font-size: 14px;
+      color: #d9e3f5;
+    }
+    .metaRow span:first-child { color: var(--muted); }
+    .players {
+      margin-top: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .pill {
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.06);
+      color: #edf3ff;
+      font-size: 13px;
+    }
+    .emptyState {
+      border-radius: var(--radius-xl);
+      padding: 26px;
+      min-height: 220px;
+      display: flex;
+      align-items: end;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 15px;
+    }
+    #adminPanel {
+      display:none;
+      margin-bottom:16px;
+      border-radius: 24px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      padding: 18px;
+    }
+    input {
+      width: 280px;
+      max-width: 100%;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(9,14,24,.92);
+      color: var(--text);
+    }
+    button {
+      padding: 9px 12px;
+      border: 0;
+      border-radius: 12px;
+      background: #2563eb;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .delBtn {
+      display: none;
+      margin-top: 12px;
+      background:#dc2626;
+      width: 100%;
+    }
+    @media (max-width: 720px) {
+      .wrap { width: min(100vw - 24px, 1400px); }
+      .hero { padding: 26px 20px 22px; border-radius: 28px; }
+      .sectionHead { align-items: start; flex-direction: column; }
+      .rail { grid-auto-columns: minmax(280px, 86vw); }
+      .card { min-height: 400px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="adminPanel">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <input id="adminToken" placeholder="管理员 token" />
+        <span class="sectionDesc">输入 token 后，卡片底部会出现删除按钮</span>
+      </div>
+      <div id="adminMsg" class="sectionDesc" style="margin-top:8px;"></div>
+    </div>
+
+    <div class="hero">
+      <div class="topline">Teardown Room Center</div>
+      <h1>像精选页一样看服务器，不像后台一样盯表格。</h1>
+      <div class="heroSub">上面先看正在跳心跳的房间，下面再看已经离线的。重点信息只放最显眼的位置：房间、房间码、人数、状态。</div>
+      <div class="heroMeta">
+        <div class="metaPill"><span>在线</span><b id="onlineCount">0</b></div>
+        <div class="metaPill"><span>离线</span><b id="offlineCount">0</b></div>
+        <div class="metaPill"><span>总计</span><b id="totalCount">0</b></div>
+        <div class="metaPill"><span id="updated">--</span></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sectionHead">
+        <div>
+          <div class="eyebrow">Now Playing</div>
+          <h2 class="sectionTitle">在线服务器</h2>
+          <div class="sectionDesc">心跳最近有变化的房间，横向滑着看就行。</div>
+        </div>
+        <div class="countBadge" id="summary">加载中...</div>
+      </div>
+      <div id="onlineRooms" class="rail"></div>
+    </div>
+
+    <div class="section">
+      <div class="sectionHead">
+        <div>
+          <div class="eyebrow">Recently Offline</div>
+          <h2 class="sectionTitle">离线服务器</h2>
+          <div class="sectionDesc">已经超时或心跳停止的房间，信息保留但视觉更淡。</div>
+        </div>
+      </div>
+      <div id="offlineRooms" class="rail"></div>
+    </div>
+  </div>
+
+  <script>
+    const URL_HAS_ADMIN = __ADMIN_ENABLED__;
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>\"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+    }
+
+    function hasToken() {
+      const input = document.getElementById('adminToken');
+      return input && input.value.trim().length > 0;
+    }
+
+    function statusBadge(room) {
+      return room.online
+        ? '<span class="statusBadge online">● 在线</span>'
+        : '<span class="statusBadge offline">● 离线</span>';
+    }
+
+    function renderRoom(room) {
+      const players = (room.players || []).length
+        ? (room.players || []).map(p => `<span class="pill">${esc(p)}</span>`).join('')
+        : '<span class="pill">暂无玩家</span>';
+      const isOnline = !!room.online;
+      const roomCode = room.roomCode || '';
+      return `
+        <div class="card ${isOnline ? '' : 'offlineCard'}">
+          <div class="cardInner">
+            <div class="cardTop">
+              <div>
+                <div class="miniLabel">${isOnline ? 'LIVE ROOM' : 'OFFLINE ROOM'}</div>
+                <div class="roomName">${esc(room.roomLabel || room.reporterName)}</div>
+              </div>
+              ${statusBadge(room)}
+            </div>
+
+            <div class="hostLine">房主：${esc(room.hostName || '')}</div>
+
+            <div class="codeBlock">
+              <div class="codeLabel">房间码</div>
+              <div class="codeValue ${roomCode ? '' : 'empty'}">${esc(roomCode || '未填写')}</div>
+            </div>
+
+            <div class="quickStats">
+              <div class="stat">
+                <div class="statLabel">人数</div>
+                <div class="statValue">${room.playerCount || 0} / ${room.maxPlayers || 0}</div>
+              </div>
+              <div class="stat">
+                <div class="statLabel">状态</div>
+                <div class="statValue">${isOnline ? '在线' : '离线'}</div>
+              </div>
+            </div>
+
+            <div class="metaBlock">
+              <div class="metaRow"><span>心跳</span><span>uptime=${room.uptimeSeconds || 0} · last=${room.lastUpdate || 0}</span></div>
+              <div class="metaRow"><span>序号</span><span>${room.sequence || 0}</span></div>
+              <div class="metaRow"><span>原因</span><span>${esc(room.offlineReason || (isOnline ? '-' : '离线'))}</span></div>
+            </div>
+
+            <div class="players">${players}</div>
+            <button class="delBtn" data-id="${esc(room.reporterId)}">删除这个房间</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateDelBtns() {
+      const show = hasToken();
+      document.querySelectorAll('.delBtn').forEach(btn => {
+        btn.style.display = show ? 'block' : 'none';
+      });
+    }
+
+    async function deleteRoom(reporterId) {
+      const token = document.getElementById('adminToken').value.trim();
+      if (!token) {
+        alert('请先输入管理员 token');
+        return;
+      }
+      if (!confirm('确定要删除这个房间吗？此操作不可恢复。')) return;
+      const r = await fetch('/admin/delete-room', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token },
+        body: JSON.stringify({ reporterId })
+      });
+      const j = await r.json();
+      if (j.ok) {
+        document.getElementById('adminMsg').textContent = '删除成功';
+        refresh();
+      } else {
+        alert('删除失败：' + (j.detail || 'unknown'));
+      }
+    }
+
+    async function refresh() {
+      try {
+        const res = await fetch('/rooms?_=' + Date.now());
+        const data = await res.json();
+        const rooms = data.rooms || [];
+        const onlineRooms = rooms.filter(r => r.online);
+        const offlineRooms = rooms.filter(r => !r.online);
+
+        document.getElementById('onlineCount').textContent = onlineRooms.length;
+        document.getElementById('offlineCount').textContent = offlineRooms.length;
+        document.getElementById('totalCount').textContent = rooms.length;
+        document.getElementById('summary').textContent = `在线 ${onlineRooms.length} · 离线 ${offlineRooms.length}`;
+        document.getElementById('updated').textContent = '更新于 ' + new Date().toLocaleTimeString();
+
+        const onlineEl = document.getElementById('onlineRooms');
+        const offlineEl = document.getElementById('offlineRooms');
+        onlineEl.innerHTML = onlineRooms.length
+          ? onlineRooms.map(renderRoom).join('')
+          : '<div class="emptyState">现在没有在线房间，等有人开服后这里会亮起来。</div>';
+        offlineEl.innerHTML = offlineRooms.length
+          ? offlineRooms.map(renderRoom).join('')
+          : '<div class="emptyState">现在没有离线房间，列表很干净。</div>';
+        updateDelBtns();
+      } catch (e) {
+        document.getElementById('onlineRooms').innerHTML = `<div class="emptyState">加载失败：${esc(e.message || e)}</div>`;
+        document.getElementById('offlineRooms').innerHTML = '';
+      }
+    }
+
+    if (URL_HAS_ADMIN) {
+      document.getElementById('adminPanel').style.display = 'block';
+      document.getElementById('adminToken').value = '';
+      document.getElementById('adminToken').addEventListener('input', updateDelBtns);
+    }
+
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('delBtn')) {
+        deleteRoom(e.target.dataset.id);
+      }
+    });
+
+    refresh();
+    setInterval(refresh, 2000);
+  </script>
+</body>
+</html>

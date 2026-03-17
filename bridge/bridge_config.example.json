@@ -1,0 +1,8 @@
+{
+  "clientId": "replace-with-your-client-id",
+  "roomLabel": "示例房间",
+  "roomCode": "ABCDE",
+  "cloudEndpoint": "http://your-cloud-center:18080/report",
+  "pollInterval": 0.2,
+  "uploadInterval": 1.0
+}

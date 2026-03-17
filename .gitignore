@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.venv312/
+
+# Node
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.zip
+run_bridge.dist/
+run_bridge.build/
+
+# Runtime data
+logs/
+data/
+*.db
+*.log
+nuitka-crash-report.xml
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Temp / snapshots
+.alma-snapshots/
+.tmp-tools/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

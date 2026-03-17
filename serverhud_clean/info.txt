@@ -1,0 +1,6 @@
+name=Room State HUD
+author=Elaina
+description=Displays and exports Teardown multiplayer room state for the room bridge system
+version=2
+tags=script,multiplayer,hud,bridge,status
+script=main.lua

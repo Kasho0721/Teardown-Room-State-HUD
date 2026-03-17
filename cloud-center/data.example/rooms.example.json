@@ -1,0 +1,22 @@
+{
+  "demo-room": {
+    "reporterId": "demo-room",
+    "reporterName": "Demo Reporter",
+    "roomLabel": "示例房间",
+    "roomCode": "ABCDE",
+    "hostName": "DemoHost",
+    "playerCount": 3,
+    "maxPlayers": 8,
+    "players": ["Alice", "Bob", "Carol"],
+    "uptimeSeconds": 120,
+    "lastUpdate": 121,
+    "sequence": 1,
+    "online": true,
+    "stale": false,
+    "offline": false,
+    "offlineReason": "",
+    "source": "bridge-demo",
+    "reportedAt": 1700000000,
+    "changed": true
+  }
+}
