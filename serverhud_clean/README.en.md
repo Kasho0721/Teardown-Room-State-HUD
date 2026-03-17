@@ -1,5 +1,9 @@
 # Room State HUD
 
+Steam Workshop:
+https://steamcommunity.com/sharedfiles/filedetails/?id=3686800906
+
+
 This directory contains a **HUD / mod script** used to extract Teardown multiplayer room state.
 
 Its purpose is not fancy UI. It exists to expose structured room state so the bridge can read it and upload it to the cloud service.

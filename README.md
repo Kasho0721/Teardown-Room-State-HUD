@@ -2,6 +2,9 @@
 
 [English Version](./README.en.md)
 
+Steam Workshop:
+https://steamcommunity.com/sharedfiles/filedetails/?id=3686800906
+
 
 一个用于 **Teardown 联机房间状态采集、云端汇总展示、以及 QQ/OneBot 查询** 的完整方案。
 

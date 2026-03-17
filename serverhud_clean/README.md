@@ -2,6 +2,9 @@
 
 [English Version](./README.en.md)
 
+Steam Workshop:
+https://steamcommunity.com/sharedfiles/filedetails/?id=3686800906
+
 
 这个目录是一个给 **Teardown 联机房状态采集** 用的 HUD / 脚本模块。
 
