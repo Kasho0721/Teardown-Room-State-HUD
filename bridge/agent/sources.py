@@ -194,6 +194,12 @@ class XmlSavegameSource(HudSource):
                     branch_values = self._collect_branch_values(direct)
                     if branch_values:
                         return branch_values
+            if tag.startswith("steam-"):
+                direct = branch.find("serverhud")
+                if direct is not None:
+                    branch_values = self._collect_branch_values(direct)
+                    if branch_values:
+                        return branch_values
 
         values = self._extract_path_based_nested_values(root)
         if values:
